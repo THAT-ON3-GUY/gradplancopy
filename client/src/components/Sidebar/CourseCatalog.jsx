@@ -19,27 +19,29 @@ export default function CourseCatalog({ courses, plannedCourseIds }) {
   return (
     <div className="flex flex-col h-full">
       {/* Search */}
-      <div className="p-3 border-b border-byui-border">
+      <div className="p-3 border-b border-gray-200">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search courses…"
-          className="w-full text-sm border border-byui-border rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-byui-navy"
+          style={{ fontFamily: 'Open Sans, sans-serif', fontSize: '13px' }}
+          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-byui-text"
         />
       </div>
 
-      {/* Department filter */}
-      <div className="px-3 py-2 flex flex-wrap gap-1 border-b border-byui-border">
+      {/* Department filter chips */}
+      <div className="px-3 py-2 flex flex-wrap gap-1 border-b border-gray-200 bg-gray-50">
         {DEPTS.map((d) => (
           <button
             key={d}
             onClick={() => setDept(d)}
-            className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-              dept === d
-                ? 'bg-byui-navy text-white border-byui-navy'
-                : 'bg-white text-gray-600 border-gray-300 hover:border-byui-navy'
-            }`}
+            className="text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide transition-colors"
+            style={{
+              backgroundColor: dept === d ? '#006ca5' : '#fff',
+              color: dept === d ? '#fff' : '#515252',
+              borderColor: dept === d ? '#006ca5' : '#d1d2d2',
+            }}
           >
             {d}
           </button>
@@ -47,17 +49,17 @@ export default function CourseCatalog({ courses, plannedCourseIds }) {
       </div>
 
       {/* Course list */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+      <div className="flex-1 overflow-y-auto p-3">
         {filtered.length === 0 && (
-          <p className="text-xs text-gray-400 text-center mt-6">No courses match your search.</p>
+          <p className="text-xs text-gray-400 text-center mt-8 italic">No courses match your search.</p>
         )}
         {filtered.map((course) => (
           <CourseCard key={course.id} course={course} isPlanned={plannedCourseIds.has(course.id)} />
         ))}
       </div>
 
-      <div className="px-3 py-2 text-xs text-gray-400 border-t border-byui-border">
-        {filtered.length} course{filtered.length !== 1 ? 's' : ''} · Drag to add to a semester
+      <div className="px-3 py-2 text-[10px] text-gray-400 border-t border-gray-200 uppercase tracking-wide">
+        {filtered.length} course{filtered.length !== 1 ? 's' : ''} · Drag to add
       </div>
     </div>
   );

@@ -13,17 +13,16 @@ export default function CourseCard({ course, isPlanned }) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
+      style={{ ...style, marginBottom: '8px', opacity: isPlanned ? 0.45 : isDragging ? 0.25 : 1 }}
+      {...(isPlanned ? {} : { ...listeners, ...attributes })}
       title={`${course.name}\n${course.description ?? ''}\nOffered: ${course.offered?.join(', ')}`}
-      className={`relative transition-opacity ${
-        isPlanned ? 'opacity-40 cursor-not-allowed' : isDragging ? 'opacity-30' : 'hover:opacity-80'
-      }`}
+      className={isPlanned ? 'cursor-not-allowed' : ''}
     >
       <CourseChip course={course} />
       {isPlanned && (
-        <span className="absolute right-1 top-0.5 text-[10px] text-gray-400 italic">added</span>
+        <div style={{ textAlign: 'right', fontSize: '9px', color: '#50b95b', fontWeight: 700, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          ✓ In Plan
+        </div>
       )}
     </div>
   );

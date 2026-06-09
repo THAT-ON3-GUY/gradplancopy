@@ -1,23 +1,37 @@
-const DEPT_COLORS = {
-  CS: 'bg-blue-100 text-blue-800 border-blue-200',
-  Math: 'bg-purple-100 text-purple-800 border-purple-200',
-  Physics: 'bg-orange-100 text-orange-800 border-orange-200',
-  Religion: 'bg-green-100 text-green-800 border-green-200',
-  English: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  Communication: 'bg-pink-100 text-pink-800 border-pink-200',
-  History: 'bg-amber-100 text-amber-800 border-amber-200',
-  'Political Science': 'bg-teal-100 text-teal-800 border-teal-200',
-};
-
+// Unplanned-style card used in drag overlay and catalog
 export default function CourseChip({ course, isDragging = false }) {
-  const color = DEPT_COLORS[course.department] ?? 'bg-gray-100 text-gray-700 border-gray-200';
   return (
     <div
-      className={`flex items-center justify-between rounded border px-2 py-1 text-xs font-medium w-full
-        ${color} ${isDragging ? 'shadow-xl rotate-1 scale-105 cursor-grabbing' : 'cursor-grab'}`}
+      style={{
+        height: '48px',
+        borderRadius: '10px',
+        backgroundColor: '#e8e8e8',
+        border: '1px solid #d1d2d2',
+        display: 'flex',
+        alignItems: 'center',
+        overflow: 'hidden',
+        width: '100%',
+        boxShadow: isDragging ? '0 6px 12px rgba(0,0,0,0.2)' : 'none',
+        transform: isDragging ? 'rotate(1deg) scale(1.03)' : 'none',
+        cursor: isDragging ? 'grabbing' : 'grab',
+      }}
     >
-      <span className="truncate">{course.code}</span>
-      <span className="ml-2 shrink-0 font-bold">{course.credits}cr</span>
+      {/* Left icon area */}
+      <div style={{ width: '36px', height: '48px', borderRight: '1px solid #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <span style={{ fontSize: '12px', color: '#888' }}>+</span>
+      </div>
+      {/* Detail */}
+      <div style={{ flex: 1, padding: '6px 10px', overflow: 'hidden' }}>
+        <div style={{ fontWeight: 600, fontSize: '12px', color: '#515252', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{course.code}</div>
+        <div style={{ fontSize: '10px', color: '#6f6f70', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{course.name}</div>
+      </div>
+      {/* Credits */}
+      <div style={{ width: '36px', height: '48px', borderLeft: '1px solid #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontWeight: 700, fontSize: '13px', color: '#515252', lineHeight: 1 }}>{course.credits}</div>
+          <div style={{ fontSize: '8px', color: '#888', textTransform: 'uppercase', lineHeight: 1 }}>cr</div>
+        </div>
+      </div>
     </div>
   );
 }

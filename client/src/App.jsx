@@ -179,12 +179,11 @@ export default function App() {
           }}
           onValidate={validatePlan}
           validating={validating}
-          validation={validation}
         />
 
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
-          <aside className="w-72 flex flex-col bg-white border-r border-byui-border shadow-sm overflow-hidden">
+          <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm overflow-hidden" style={{ width: '300px', minWidth: '300px' }}>
             <CreditTracker earned={earnedCredits} total={totalCreditsMajor} />
 
             {/* Tab switcher */}
@@ -193,11 +192,12 @@ export default function App() {
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`flex-1 py-2 text-sm font-medium capitalize transition-colors ${
-                    tab === t
-                      ? 'text-byui-navy border-b-2 border-byui-navy'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                  className="flex-1 py-2 text-sm font-medium capitalize transition-colors"
+                  style={{
+                    color: tab === t ? '#006ca5' : '#6f6f70',
+                    borderBottom: tab === t ? '2px solid #006ca5' : '2px solid transparent',
+                    fontFamily: 'Open Sans, sans-serif',
+                  }}
                 >
                   {t === 'catalog' ? 'Course Catalog' : 'Requirements'}
                 </button>
@@ -214,7 +214,7 @@ export default function App() {
           </aside>
 
           {/* Main planner grid */}
-          <main className="flex-1 overflow-auto bg-byui-gray p-4">
+          <main className="flex-1 overflow-auto p-6" style={{ backgroundColor: '#f4f4f4' }}>
             {validation && (
               <div
                 className={`mb-3 px-4 py-2 rounded-lg text-sm font-medium flex items-start gap-2 ${

@@ -1,25 +1,47 @@
 export default function CreditTracker({ earned, total }) {
   const pct = Math.min((earned / total) * 100, 100);
+  const done = earned >= total;
 
   return (
-    <div className="px-4 py-3 bg-byui-navy text-white">
+    <div style={{ backgroundColor: '#006ca5', padding: '12px 16px' }}>
+      {/* Label row */}
       <div className="flex justify-between items-baseline mb-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-blue-200">Total Credits</span>
-        <span className="text-sm font-bold">
-          <span className={earned >= total ? 'text-green-400' : 'text-byui-gold'}>{earned}</span>
-          <span className="text-blue-300"> / {total}</span>
+        <span style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Credits Planned
         </span>
+        <div className="flex items-baseline gap-0">
+          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)', paddingRight: '6px' }}>of {total}</span>
+          <span
+            style={{
+              fontSize: '27px',
+              fontWeight: 300,
+              color: done ? '#a0f0a0' : '#fff',
+              lineHeight: 1,
+              paddingLeft: '6px',
+              borderLeft: '1px solid rgba(255,255,255,0.3)',
+            }}
+          >
+            {earned}
+          </span>
+        </div>
       </div>
-      <div className="w-full bg-byui-navyDark rounded-full h-2">
+
+      {/* Progress bar */}
+      <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '2px' }}>
         <div
-          className="h-2 rounded-full transition-all duration-500"
           style={{
+            height: '4px',
             width: `${pct}%`,
-            backgroundColor: pct >= 100 ? '#4ade80' : '#E1A829',
+            backgroundColor: done ? '#a0f0a0' : '#50b95b',
+            borderRadius: '2px',
+            transition: 'width 0.5s',
           }}
         />
       </div>
-      <p className="text-xs text-blue-300 mt-1">{Math.max(total - earned, 0)} credits remaining</p>
+
+      <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>
+        {Math.max(total - earned, 0)} credits remaining to graduate
+      </p>
     </div>
   );
 }
