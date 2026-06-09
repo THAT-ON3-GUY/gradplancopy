@@ -1,32 +1,20 @@
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
-// Status → background color mapping from the real BYUI site
-const STATUS_COLORS = {
-  planned:   '#50b95b',
-  enrolled:  '#008fdd',
-  completed: '#0072b0',
-  recommended: '#8f00f8',
-};
+// Pencil/edit SVG matching BYUI's sprite icon
+const PencilIcon = () => (
+  <svg viewBox="0 0 24 24" fill="white" width="18" height="18" style={{ opacity: 0.9 }}>
+    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+  </svg>
+);
 
-// Status icon character (uses the sprite concept simplified)
-const STATUS_ICONS = {
-  planned:   '✓',
-  enrolled:  '◉',
-  completed: '★',
-  recommended: '⚡',
-};
-
-export default function PlannedCourseCard({ planCourse, onRemove }) {
+export default function PlannedCourseCard({ planCourse, onRemove, bgColor = '#50b95b' }) {
   const { course, plan_course_id } = planCourse;
-  const status = 'planned'; // All user-added courses are "planned"
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `planned-${plan_course_id}`,
   });
 
-  const bg = STATUS_COLORS[status];
-  const icon = STATUS_ICONS[status];
   const style = { transform: CSS.Translate.toString(transform) };
 
   return (
@@ -34,57 +22,58 @@ export default function PlannedCourseCard({ planCourse, onRemove }) {
       ref={setNodeRef}
       style={{
         ...style,
-        backgroundColor: bg,
+        backgroundColor: bgColor,
         height: '64px',
         borderRadius: '10px',
         marginBottom: '10px',
-        opacity: isDragging ? 0.3 : 1,
+        opacity: isDragging ? 0.25 : 1,
+        display: 'flex',
+        alignItems: 'stretch',
+        overflow: 'hidden',
+        cursor: 'grab',
+        userSelect: 'none',
       }}
-      className="group flex items-center w-full select-none overflow-hidden cursor-grab active:cursor-grabbing"
-      title={`${course.name}\n${course.description ?? ''}`}
+      className="group"
+      title={course.name}
     >
-      {/* Action section (left, 44px) */}
+      {/* Left — pencil icon / remove on hover */}
       <div
-        {...listeners}
-        {...attributes}
-        className="flex items-center justify-center shrink-0"
-        style={{ width: '44px', height: '64px', borderRight: '1px solid rgba(255,255,255,0.4)', position: 'relative' }}
+        style={{ width: '44px', borderRight: '1px solid rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}
       >
-        <span className="text-white text-lg opacity-80">{icon}</span>
-
-        {/* Remove button on hover */}
+        <div className="group-hover:hidden flex items-center justify-center w-full h-full" {...listeners} {...attributes}>
+          <PencilIcon />
+        </div>
         <button
-          onClick={(e) => { e.stopPropagation(); onRemove(plan_course_id); }}
-          className="absolute inset-0 hidden group-hover:flex items-center justify-center bg-red-600 bg-opacity-90 text-white text-lg font-bold transition-all"
+          onClick={() => onRemove(plan_course_id)}
+          className="hidden group-hover:flex items-center justify-center w-full h-full text-white text-xl font-bold bg-red-600 bg-opacity-90"
           style={{ borderRadius: '10px 0 0 10px' }}
-          title="Remove from plan"
+          title="Remove"
         >
           ×
         </button>
       </div>
 
-      {/* Subject detail (middle, flex-grow) */}
+      {/* Middle — name + code */}
       <div
         {...listeners}
         {...attributes}
-        className="flex flex-col justify-center flex-1 overflow-hidden px-3"
-        style={{ borderRight: '1px solid rgba(255,255,255,0.4)', height: '64px' }}
+        style={{ flex: 1, padding: '10px 12px', borderRight: '1px solid rgba(255,255,255,0.35)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
       >
-        <div className="text-white font-semibold text-sm leading-tight truncate">{course.code}</div>
-        <div className="text-white text-xs opacity-80 leading-tight truncate">{course.name}</div>
+        <div style={{ color: '#fff', fontSize: '14px', fontWeight: 400, lineHeight: 1.2, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+          {course.name}
+        </div>
+        <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: 600, marginTop: '3px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+          {course.code}
+        </div>
       </div>
 
-      {/* Credit count (right, 44px) */}
+      {/* Right — credits */}
       <div
         {...listeners}
         {...attributes}
-        className="flex items-center justify-center shrink-0"
-        style={{ width: '44px', height: '64px' }}
+        style={{ width: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
       >
-        <div className="text-center">
-          <div className="text-white font-bold text-base leading-none">{course.credits}</div>
-          <div className="text-white text-[8px] opacity-70 uppercase leading-none mt-0.5">cr</div>
-        </div>
+        <span style={{ color: '#fff', fontSize: '16px', fontWeight: 400 }}>{course.credits}</span>
       </div>
     </div>
   );

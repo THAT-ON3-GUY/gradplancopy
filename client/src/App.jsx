@@ -1,26 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import Header from './components/Header';
-import CourseCatalog from './components/Sidebar/CourseCatalog';
-import RequirementsPanel from './components/Sidebar/RequirementsPanel';
-import PlannerGrid from './components/Planner/PlannerGrid';
-import CreditTracker from './components/CreditTracker';
+import Navbar from './components/Navbar';
+import SubHeader from './components/SubHeader';
+import PlannerSection from './components/Planner/PlannerSection';
+import RequirementsPanel from './components/Requirements/RequirementsPanel';
 import CourseChip from './components/Sidebar/CourseChip';
 
 const BASE = '/api';
-
-const SEMESTERS = [
-  { year: 2024, term: 'Fall' },
-  { year: 2025, term: 'Winter' },
-  { year: 2025, term: 'Spring' },
-  { year: 2025, term: 'Fall' },
-  { year: 2026, term: 'Winter' },
-  { year: 2026, term: 'Spring' },
-  { year: 2026, term: 'Fall' },
-  { year: 2027, term: 'Winter' },
-  { year: 2027, term: 'Spring' },
-  { year: 2027, term: 'Fall' },
-];
 
 export default function App() {
   const [majors, setMajors] = useState([]);
@@ -32,67 +18,44 @@ export default function App() {
   const [activeItem, setActiveItem] = useState(null);
   const [validation, setValidation] = useState(null);
   const [validating, setValidating] = useState(false);
-  const [tab, setTab] = useState('catalog');
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  // Load majors
   useEffect(() => {
-    fetch(`${BASE}/majors`)
-      .then((r) => r.json())
-      .then((data) => {
-        setMajors(data);
-        if (data.length) setSelectedMajorId(data[0].id);
-      });
+    fetch(`${BASE}/majors`).then((r) => r.json()).then((data) => {
+      setMajors(data);
+      if (data.length) setSelectedMajorId(data[0].id);
+    });
+    fetch(`${BASE}/courses`).then((r) => r.json()).then(setAllCourses);
   }, []);
 
-  // Load courses
-  useEffect(() => {
-    fetch(`${BASE}/courses`)
-      .then((r) => r.json())
-      .then(setAllCourses);
-  }, []);
-
-  // Load requirements when major changes
   useEffect(() => {
     if (!selectedMajorId) return;
-    fetch(`${BASE}/majors/${selectedMajorId}/requirements`)
-      .then((r) => r.json())
-      .then(setRequirements);
+    fetch(`${BASE}/majors/${selectedMajorId}/requirements`).then((r) => r.json()).then(setRequirements);
   }, [selectedMajorId]);
 
-  // Load or create plan when major changes
   useEffect(() => {
     if (!selectedMajorId) return;
-    fetch(`${BASE}/plans`)
-      .then((r) => r.json())
-      .then((plans) => {
-        const match = plans.find((p) => p.major_id === selectedMajorId);
-        if (match) {
-          setPlanId(match.id);
-        } else {
-          return fetch(`${BASE}/plans`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: 'My Graduation Plan', major_id: selectedMajorId }),
-          })
-            .then((r) => r.json())
-            .then((p) => setPlanId(p.id));
-        }
-      });
+    fetch(`${BASE}/plans`).then((r) => r.json()).then((plans) => {
+      const match = plans.find((p) => p.major_id === selectedMajorId);
+      if (match) {
+        setPlanId(match.id);
+      } else {
+        fetch(`${BASE}/plans`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'My Graduation Plan', major_id: selectedMajorId }),
+        }).then((r) => r.json()).then((p) => setPlanId(p.id));
+      }
+    });
   }, [selectedMajorId]);
 
-  // Load plan courses when plan changes
   const loadPlanCourses = useCallback(() => {
     if (!planId) return;
-    fetch(`${BASE}/plans/${planId}/courses`)
-      .then((r) => r.json())
-      .then(setPlanCourses);
+    fetch(`${BASE}/plans/${planId}/courses`).then((r) => r.json()).then(setPlanCourses);
   }, [planId]);
 
-  useEffect(() => {
-    loadPlanCourses();
-  }, [loadPlanCourses]);
+  useEffect(() => { loadPlanCourses(); }, [loadPlanCourses]);
 
   const handleDragStart = (event) => {
     setActiveItem(event.active);
@@ -110,7 +73,6 @@ export default function App() {
     const parts = overId.split('-');
     const semYear = parseInt(parts[1]);
     const semTerm = parts[2];
-
     const activeId = String(active.id);
 
     if (activeId.startsWith('catalog-')) {
@@ -146,9 +108,8 @@ export default function App() {
   };
 
   const plannedCourseIds = new Set(planCourses.map((pc) => pc.course.id));
-
-  const totalCreditsMajor = majors.find((m) => m.id === selectedMajorId)?.total_credits ?? 120;
   const earnedCredits = planCourses.reduce((sum, pc) => sum + pc.course.credits, 0);
+  const totalCredits = majors.find((m) => m.id === selectedMajorId)?.total_credits ?? 120;
 
   const getDragOverlayCourse = () => {
     if (!activeItem) return null;
@@ -168,85 +129,30 @@ export default function App() {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-screen overflow-hidden">
-        <Header
-          majors={majors}
-          selectedMajorId={selectedMajorId}
-          onMajorChange={(id) => {
-            setSelectedMajorId(id);
-            setPlanCourses([]);
-            setValidation(null);
-          }}
-          onValidate={validatePlan}
-          validating={validating}
-        />
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+        {/* Black top navbar */}
+        <Navbar studentName="Student" />
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <aside className="flex flex-col bg-white border-r border-gray-200 shadow-sm overflow-hidden" style={{ width: '300px', minWidth: '300px' }}>
-            <CreditTracker earned={earnedCredits} total={totalCreditsMajor} />
+        {/* White sub-header with credit stats */}
+        <SubHeader planned={earnedCredits} total={totalCredits} />
 
-            {/* Tab switcher */}
-            <div className="flex border-b border-byui-border">
-              {['catalog', 'requirements'].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className="flex-1 py-2 text-sm font-medium capitalize transition-colors"
-                  style={{
-                    color: tab === t ? '#006ca5' : '#6f6f70',
-                    borderBottom: tab === t ? '2px solid #006ca5' : '2px solid transparent',
-                    fontFamily: 'Open Sans, sans-serif',
-                  }}
-                >
-                  {t === 'catalog' ? 'Course Catalog' : 'Requirements'}
-                </button>
-              ))}
-            </div>
+        {/* Main content area */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', backgroundColor: '#f4f4f4' }}>
+          {/* Left — planner */}
+          <PlannerSection
+            planCourses={planCourses}
+            onRemoveCourse={removeCourseFromPlan}
+            onValidate={validatePlan}
+            validating={validating}
+            validation={validation}
+          />
 
-            <div className="flex-1 overflow-y-auto">
-              {tab === 'catalog' ? (
-                <CourseCatalog courses={allCourses} plannedCourseIds={plannedCourseIds} />
-              ) : (
-                <RequirementsPanel requirements={requirements} plannedCourseIds={plannedCourseIds} />
-              )}
-            </div>
-          </aside>
-
-          {/* Main planner grid */}
-          <main className="flex-1 overflow-auto p-6" style={{ backgroundColor: '#f4f4f4' }}>
-            {validation && (
-              <div
-                className={`mb-3 px-4 py-2 rounded-lg text-sm font-medium flex items-start gap-2 ${
-                  validation.valid
-                    ? 'bg-green-100 text-green-800 border border-green-300'
-                    : 'bg-red-50 text-red-800 border border-red-300'
-                }`}
-              >
-                <span className="mt-0.5">{validation.valid ? '✅' : '⚠️'}</span>
-                <div>
-                  {validation.valid ? (
-                    'Your plan looks great! All prerequisites are satisfied.'
-                  ) : (
-                    <>
-                      <div className="font-semibold mb-1">Prerequisite issues found:</div>
-                      <ul className="list-disc list-inside space-y-0.5">
-                        {validation.issues.map((issue, i) => (
-                          <li key={i}>{issue.issue}</li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <PlannerGrid
-              semesters={SEMESTERS}
-              planCourses={planCourses}
-              onRemoveCourse={removeCourseFromPlan}
-            />
-          </main>
+          {/* Right — requirements */}
+          <RequirementsPanel
+            requirements={requirements}
+            allCourses={allCourses}
+            plannedCourseIds={plannedCourseIds}
+          />
         </div>
       </div>
 
