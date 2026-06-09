@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-byui-gray text-gray-800;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.course-card-dragging {
+  @apply opacity-50 rotate-2 scale-105;
+}
+
+.semester-drop-active {
+  @apply ring-2 ring-byui-gold bg-yellow-50;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
