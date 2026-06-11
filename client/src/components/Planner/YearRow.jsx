@@ -3,7 +3,14 @@ import SemesterColumn from './SemesterColumn';
 
 const CURRENT_YEAR = new Date().getFullYear(); // 2026
 
-export default function YearRow({ year, semesters, planCourses, onRemoveCourse }) {
+export default function YearRow({
+  year,
+  semesters,
+  planCourses,
+  onRemoveCourse,
+  onViewDetails,
+  onMoveCourse,
+}) {
   const [open, setOpen] = useState(true);
   const isCurrent = year === CURRENT_YEAR;
 
@@ -24,7 +31,9 @@ export default function YearRow({ year, semesters, planCourses, onRemoveCourse }
           <span style={{ fontSize: '13px', color: '#006ca5', textDecoration: 'underline', fontWeight: 400 }}>
             View Single Semester
           </span>
-          <span style={{ fontSize: '14px', color: '#888' }}>{open ? '▲' : '▼'}</span>
+          <span style={{ fontSize: '14px', color: '#888', display: 'inline-block', transition: 'transform 0.2s', transform: open ? 'rotate(0deg)' : 'rotate(180deg)' }}>
+            ▲
+          </span>
         </div>
       </button>
 
@@ -38,6 +47,8 @@ export default function YearRow({ year, semesters, planCourses, onRemoveCourse }
               term={term}
               planCourses={getCoursesForSemester(y, term)}
               onRemoveCourse={onRemoveCourse}
+              onViewDetails={onViewDetails}
+              onMoveCourse={onMoveCourse}
             />
           ))}
         </div>

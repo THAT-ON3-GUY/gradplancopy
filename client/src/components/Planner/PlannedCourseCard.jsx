@@ -1,21 +1,66 @@
+import { useState, useRef, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
-// Pencil/edit SVG matching BYUI's sprite icon
 const PencilIcon = () => (
   <svg viewBox="0 0 24 24" fill="white" width="18" height="18" style={{ opacity: 0.9 }}>
     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
   </svg>
 );
 
-export default function PlannedCourseCard({ planCourse, onRemove, bgColor = '#50b95b' }) {
+// Determine semester status from year/term (as of June 2026)
+export function getSemesterStatus(year, term) {
+  if (year < 2026) return 'completed';
+  if (year === 2026 && term === 'Winter') return 'completed';
+  if (year === 2026 && term === 'Spring') return 'enrolled';
+  return 'planned';
+}
+
+export function getStatusColor(status) {
+  if (status === 'completed') return '#0072b0';
+  if (status === 'enrolled') return '#008fdd';
+  return '#50b95b';
+}
+
+export default function PlannedCourseCard({
+  planCourse,
+  onRemove,
+  onViewDetails,
+  onMoveCourse,
+  bgColor = '#50b95b',
+  status = 'planned',
+}) {
   const { course, plan_course_id } = planCourse;
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `planned-${plan_course_id}`,
   });
 
   const style = { transform: CSS.Translate.toString(transform) };
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const handlePencilClick = (e) => {
+    e.stopPropagation();
+    setMenuOpen((o) => !o);
+  };
+
+  // Which menu items to show based on status
+  const isEditable = status === 'planned';
+  const isVariable = course.is_variable_credit;
 
   return (
     <div
@@ -29,52 +74,186 @@ export default function PlannedCourseCard({ planCourse, onRemove, bgColor = '#50
         opacity: isDragging ? 0.25 : 1,
         display: 'flex',
         alignItems: 'stretch',
-        overflow: 'hidden',
-        cursor: 'grab',
+        overflow: 'visible',
         userSelect: 'none',
+        position: 'relative',
       }}
-      className="group"
       title={course.name}
     >
-      {/* Left — pencil icon / remove on hover */}
+      {/* Left — pencil icon (opens context menu) */}
       <div
-        style={{ width: '44px', borderRight: '1px solid rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}
+        ref={menuRef}
+        style={{
+          width: '44px',
+          borderRight: '1px solid rgba(255,255,255,0.35)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          position: 'relative',
+          borderRadius: '10px 0 0 10px',
+          cursor: 'pointer',
+        }}
+        onClick={handlePencilClick}
       >
-        <div className="group-hover:hidden flex items-center justify-center w-full h-full" {...listeners} {...attributes}>
-          <PencilIcon />
-        </div>
-        <button
-          onClick={() => onRemove(plan_course_id)}
-          className="hidden group-hover:flex items-center justify-center w-full h-full text-white text-xl font-bold bg-red-600 bg-opacity-90"
-          style={{ borderRadius: '10px 0 0 10px' }}
-          title="Remove"
-        >
-          ×
-        </button>
+        <PencilIcon />
+
+        {/* Context menu dropdown */}
+        {menuOpen && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              zIndex: 500,
+              backgroundColor: '#fff',
+              border: '1px solid #e0e0e0',
+              borderRadius: '6px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+              minWidth: '180px',
+              marginTop: '4px',
+              overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Course Details — always visible */}
+            <ContextMenuItem
+              icon="ℹ"
+              label="Course Details"
+              onClick={() => {
+                setMenuOpen(false);
+                onViewDetails && onViewDetails(planCourse, status);
+              }}
+            />
+
+            {/* Remove / Move — only for planned courses */}
+            {isEditable && (
+              <>
+                <ContextMenuItem
+                  icon="✕"
+                  label="Remove Course"
+                  danger
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onRemove && onRemove(plan_course_id);
+                  }}
+                />
+                <ContextMenuItem
+                  icon="↺"
+                  label="Move Course"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onMoveCourse && onMoveCourse(planCourse);
+                  }}
+                />
+              </>
+            )}
+
+            {/* Adjust Credits — only for variable credit courses */}
+            {isVariable && isEditable && (
+              <ContextMenuItem
+                icon="↔"
+                label="Adjust Credits"
+                onClick={() => {
+                  setMenuOpen(false);
+                  // Could open a credit adjustment dialog — placeholder for now
+                  alert(`Adjust credits for ${course.code} — coming soon!`);
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Middle — name + code */}
+      {/* Middle — name + code (draggable) */}
       <div
         {...listeners}
         {...attributes}
-        style={{ flex: 1, padding: '10px 12px', borderRight: '1px solid rgba(255,255,255,0.35)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+        style={{
+          flex: 1,
+          padding: '10px 12px',
+          borderRight: '1px solid rgba(255,255,255,0.35)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          cursor: 'grab',
+        }}
       >
-        <div style={{ color: '#fff', fontSize: '14px', fontWeight: 400, lineHeight: 1.2, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+        <div
+          style={{
+            color: '#fff',
+            fontSize: '13px',
+            fontWeight: 400,
+            lineHeight: 1.2,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}
+        >
           {course.name}
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: 600, marginTop: '3px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+        <div
+          style={{
+            color: 'rgba(255,255,255,0.85)',
+            fontSize: '11px',
+            fontWeight: 600,
+            marginTop: '3px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.03em',
+          }}
+        >
           {course.code}
         </div>
       </div>
 
-      {/* Right — credits */}
+      {/* Right — credits (draggable) */}
       <div
         {...listeners}
         {...attributes}
-        style={{ width: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+        style={{
+          width: '44px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          cursor: 'grab',
+        }}
       >
-        <span style={{ color: '#fff', fontSize: '16px', fontWeight: 400 }}>{course.credits}</span>
+        <span style={{ color: '#fff', fontSize: '16px', fontWeight: 400 }}>
+          {planCourse.planned_credits ?? course.credits}
+        </span>
       </div>
     </div>
+  );
+}
+
+function ContextMenuItem({ icon, label, onClick, danger = false }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={onClick}
+      style={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '9px 14px',
+        background: hover ? (danger ? '#fff5f5' : '#f5f5f5') : '#fff',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '13px',
+        color: danger ? '#e53935' : '#333',
+        fontFamily: 'Open Sans, sans-serif',
+        textAlign: 'left',
+        borderBottom: '1px solid #f0f0f0',
+        transition: 'background-color 0.1s',
+      }}
+    >
+      <span style={{ fontSize: '14px', width: '18px', textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+      {label}
+    </button>
   );
 }

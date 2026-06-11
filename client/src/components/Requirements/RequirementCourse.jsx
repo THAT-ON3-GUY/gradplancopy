@@ -1,7 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
-export default function RequirementCourse({ course, isPlanned }) {
+export default function RequirementCourse({ course, isPlanned, onAdd, onViewDetails }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `catalog-${course.id}`,
     disabled: isPlanned,
@@ -14,49 +14,130 @@ export default function RequirementCourse({ course, isPlanned }) {
       ref={setNodeRef}
       style={{
         ...style,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#fff',
         borderRadius: '6px',
-        padding: '10px 12px',
-        marginBottom: '8px',
+        marginBottom: '6px',
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
         opacity: isDragging ? 0.25 : 1,
-        cursor: isPlanned ? 'default' : 'grab',
         border: '1px solid #e8e8e8',
+        overflow: 'hidden',
+        height: '52px',
       }}
-      {...(isPlanned ? {} : { ...listeners, ...attributes })}
-      title={isPlanned ? `${course.name} — already in plan` : `Drag to add ${course.name}`}
     >
-      {/* Course info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '13px', fontWeight: 400, color: '#333', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-          {course.name.length > 22 ? course.name.slice(0, 22) + '…' : course.name}
+      {/* Left — green + button */}
+      <button
+        onClick={() => !isPlanned && onAdd && onAdd(course)}
+        style={{
+          width: '44px',
+          height: '100%',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'none',
+          border: 'none',
+          borderRight: '1px solid #f0f0f0',
+          cursor: isPlanned ? 'default' : 'pointer',
+          padding: 0,
+        }}
+        title={isPlanned ? 'Already in plan' : `Add ${course.code} to plan`}
+      >
+        <div
+          style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            backgroundColor: isPlanned ? '#50b95b' : '#50b95b',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          {isPlanned ? (
+            // Checkmark when planned
+            <svg viewBox="0 0 24 24" fill="white" width="14" height="14">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+            </svg>
+          ) : (
+            // Plus sign when not planned
+            <svg viewBox="0 0 24 24" fill="white" width="14" height="14">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+          )}
         </div>
-        <div style={{ fontSize: '11px', color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+      </button>
+
+      {/* Middle — name + code (draggable handle) */}
+      <div
+        {...(isPlanned ? {} : { ...listeners, ...attributes })}
+        style={{
+          flex: 1,
+          padding: '0 10px',
+          overflow: 'hidden',
+          cursor: isPlanned ? 'default' : 'grab',
+        }}
+      >
+        <div
+          style={{
+            fontSize: '13px',
+            fontWeight: 400,
+            color: '#333',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+            lineHeight: 1.2,
+          }}
+        >
+          {course.name}
+        </div>
+        <div
+          style={{
+            fontSize: '11px',
+            color: '#888',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.03em',
+            marginTop: '2px',
+          }}
+        >
           {course.code}
         </div>
       </div>
 
       {/* View Details link */}
-      <span style={{ fontSize: '11px', color: '#006ca5', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+      <button
+        onClick={() => onViewDetails && onViewDetails(course)}
+        style={{
+          fontSize: '11px',
+          color: '#006ca5',
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+          background: 'none',
+          border: 'none',
+          padding: '0 6px',
+          fontFamily: 'Open Sans, sans-serif',
+        }}
+      >
         View Details
-      </span>
+      </button>
 
       {/* Credits */}
-      <span style={{ fontSize: '13px', color: '#333', fontWeight: 600, marginLeft: '4px', flexShrink: 0 }}>
+      <span
+        style={{
+          fontSize: '14px',
+          color: '#333',
+          fontWeight: 600,
+          marginRight: '12px',
+          flexShrink: 0,
+          minWidth: '20px',
+          textAlign: 'right',
+        }}
+      >
         {course.credits}
       </span>
-
-      {/* Status dot */}
-      <div style={{
-        width: '12px',
-        height: '12px',
-        borderRadius: '50%',
-        flexShrink: 0,
-        backgroundColor: isPlanned ? '#50b95b' : 'transparent',
-        border: isPlanned ? 'none' : '2px solid #ccc',
-      }} />
     </div>
   );
 }
