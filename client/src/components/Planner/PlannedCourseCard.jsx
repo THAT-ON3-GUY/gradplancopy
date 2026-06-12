@@ -36,8 +36,11 @@ export default function PlannedCourseCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
+  const draggable = status === 'planned';
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `planned-${plan_course_id}`,
+    disabled: !draggable,
   });
 
   const style = { transform: CSS.Translate.toString(transform) };
@@ -177,7 +180,7 @@ export default function PlannedCourseCard({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          cursor: 'grab',
+          cursor: draggable ? 'grab' : 'default',
         }}
       >
         <div
@@ -217,7 +220,7 @@ export default function PlannedCourseCard({
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          cursor: 'grab',
+          cursor: draggable ? 'grab' : 'default',
         }}
       >
         <span style={{ color: '#fff', fontSize: '16px', fontWeight: 400 }}>
