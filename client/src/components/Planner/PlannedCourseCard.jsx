@@ -196,17 +196,36 @@ export default function PlannedCourseCard({
         >
           {course.name}
         </div>
-        <div
-          style={{
-            color: 'rgba(255,255,255,0.85)',
-            fontSize: '11px',
-            fontWeight: 600,
-            marginTop: '3px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.03em',
-          }}
-        >
-          {course.code}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
+          <span
+            style={{
+              color: 'rgba(255,255,255,0.85)',
+              fontSize: '11px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.03em',
+            }}
+          >
+            {course.code}
+          </span>
+          {course.is_variable_credit && (
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'rgba(255,255,255,0.95)',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                border: '1px solid rgba(255,255,255,0.4)',
+                borderRadius: '3px',
+                padding: '1px 4px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              VAR CR
+            </span>
+          )}
         </div>
       </div>
 

@@ -92,17 +92,36 @@ export default function RequirementCourse({ course, isPlanned, onAdd, onViewDeta
         >
           {course.name}
         </div>
-        <div
-          style={{
-            fontSize: '11px',
-            color: '#888',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.03em',
-            marginTop: '2px',
-          }}
-        >
-          {course.code}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
+          <span
+            style={{
+              fontSize: '11px',
+              color: '#888',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.03em',
+            }}
+          >
+            {course.code}
+          </span>
+          {course.is_variable_credit && (
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                color: '#006ca5',
+                backgroundColor: '#e8f4fb',
+                border: '1px solid #b3d9f0',
+                borderRadius: '3px',
+                padding: '1px 4px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              VAR CR
+            </span>
+          )}
         </div>
       </div>
 
