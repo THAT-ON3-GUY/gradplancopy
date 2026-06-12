@@ -27,6 +27,7 @@ export default function PlannedCourseCard({
   onRemove,
   onViewDetails,
   onMoveCourse,
+  onAdjustCredits,
   bgColor = '#50b95b',
   status = 'planned',
 }) {
@@ -156,8 +157,7 @@ export default function PlannedCourseCard({
                 label="Adjust Credits"
                 onClick={() => {
                   setMenuOpen(false);
-                  // Could open a credit adjustment dialog — placeholder for now
-                  alert(`Adjust credits for ${course.code} — coming soon!`);
+                  onAdjustCredits && onAdjustCredits(planCourse);
                 }}
               />
             )}

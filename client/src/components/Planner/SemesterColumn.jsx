@@ -14,6 +14,7 @@ export default function SemesterColumn({
   onRemoveCourse,
   onViewDetails,
   onMoveCourse,
+  onAdjustCredits,
 }) {
   const id = `sem-${year}-${term}`;
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -63,6 +64,7 @@ export default function SemesterColumn({
             onRemove={onRemoveCourse}
             onViewDetails={onViewDetails}
             onMoveCourse={onMoveCourse}
+            onAdjustCredits={onAdjustCredits}
             bgColor={bgColor}
             status={status}
           />

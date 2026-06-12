@@ -10,6 +10,7 @@ export default function YearRow({
   onRemoveCourse,
   onViewDetails,
   onMoveCourse,
+  onAdjustCredits,
 }) {
   const [open, setOpen] = useState(true);
   const isCurrent = year === CURRENT_YEAR;
@@ -49,6 +50,7 @@ export default function YearRow({
               onRemoveCourse={onRemoveCourse}
               onViewDetails={onViewDetails}
               onMoveCourse={onMoveCourse}
+              onAdjustCredits={onAdjustCredits}
             />
           ))}
         </div>

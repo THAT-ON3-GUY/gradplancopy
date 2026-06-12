@@ -15,7 +15,9 @@ function getSemLabel(year, term) {
 
 export default function CourseDetailModal({ planCourse, status = 'planned', onClose, onRemove, onMove }) {
   const { course, semester_year, semester_term, plan_course_id } = planCourse;
-  const grade = getGrade(course.id, status);
+  // 'catalog' = viewing from requirements panel, not yet in a plan
+  const isCatalog = status === 'catalog';
+  const grade = isCatalog ? null : getGrade(course.id, status);
 
   return (
     <div
@@ -75,7 +77,20 @@ export default function CourseDetailModal({ planCourse, status = 'planned', onCl
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               {/* Grade badge */}
-              {grade ? (
+              {isCatalog ? (
+                <div
+                  style={{
+                    width: '56px', height: '56px',
+                    backgroundColor: '#888',
+                    borderRadius: '8px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontSize: '10px', fontWeight: 700,
+                    flexShrink: 0, textAlign: 'center', lineHeight: 1.2, padding: '4px',
+                  }}
+                >
+                  NOT PLANNED
+                </div>
+              ) : grade ? (
                 <div
                   style={{
                     width: '56px', height: '56px',
@@ -105,6 +120,11 @@ export default function CourseDetailModal({ planCourse, status = 'planned', onCl
               )}
 
               <div>
+                {isCatalog && (
+                  <div style={{ fontSize: '14px', color: '#888', fontStyle: 'italic' }}>
+                    Not yet added to plan
+                  </div>
+                )}
                 {status === 'completed' && (
                   <div style={{ fontSize: '14px', color: '#333', fontWeight: 600 }}>
                     Earned {getSemLabel(semester_year, semester_term)}
@@ -120,9 +140,11 @@ export default function CourseDetailModal({ planCourse, status = 'planned', onCl
                     Planned – {getSemLabel(semester_year, semester_term)}
                   </div>
                 )}
-                <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
-                  {status === 'completed' ? 'Grade Earned' : status === 'enrolled' ? 'In Progress' : 'Future Semester'}
-                </div>
+                {!isCatalog && (
+                  <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
+                    {status === 'completed' ? 'Grade Earned' : status === 'enrolled' ? 'In Progress' : 'Future Semester'}
+                  </div>
+                )}
 
                 {/* Course History dropdown (non-functional) */}
                 <button

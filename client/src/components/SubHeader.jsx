@@ -1,5 +1,6 @@
-export default function SubHeader({ planned, total, onSeeDetails }) {
-  const unplanned = Math.max(total - planned, 0);
+export default function SubHeader({ completed = 0, inProgress = 0, planned = 0, total = 120, showDetails = false, onSeeDetails }) {
+  const accountedFor = completed + inProgress + planned;
+  const unplanned = Math.max(total - accountedFor, 0);
 
   const Stat = ({ label, value, color }) => (
     <div className="text-center px-4 border-r border-gray-200 last:border-0">
@@ -35,8 +36,8 @@ export default function SubHeader({ planned, total, onSeeDetails }) {
 
         {/* Credit stats */}
         <div className="flex items-center ml-auto">
-          <Stat label="Completed" value="0" color="#0072b0" />
-          <Stat label="In-Progress" value="0" color="#008fdd" />
+          <Stat label="Completed" value={completed} color="#0072b0" />
+          <Stat label="In-Progress" value={inProgress} color="#008fdd" />
           <Stat label="Planned" value={planned} color="#50b95b" />
           <Stat label="Unplanned" value={unplanned} color="#888" />
           <div className="text-center px-4">
@@ -48,7 +49,7 @@ export default function SubHeader({ planned, total, onSeeDetails }) {
             className="flex items-center gap-1 text-sm font-semibold ml-2 hover:underline"
             style={{ color: '#006ca5' }}
           >
-            SEE DETAILS <span>▾</span>
+            SEE DETAILS <span style={{ display: 'inline-block', transition: 'transform 0.2s', transform: showDetails ? 'rotate(180deg)' : 'none' }}>▾</span>
           </button>
         </div>
       </div>

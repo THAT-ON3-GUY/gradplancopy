@@ -22,6 +22,7 @@ export default function PlannerSection({
   onRemoveCourse,
   onViewDetails,
   onMoveCourse,
+  onAdjustCredits,
   onValidate,
   validating,
   validation,
@@ -104,6 +105,7 @@ export default function PlannerSection({
           onRemoveCourse={onRemoveCourse}
           onViewDetails={onViewDetails}
           onMoveCourse={onMoveCourse}
+          onAdjustCredits={onAdjustCredits}
         />
       ))}
 

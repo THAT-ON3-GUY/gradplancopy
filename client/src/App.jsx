@@ -8,6 +8,8 @@ import CourseChip from './components/Sidebar/CourseChip';
 import Footer from './components/Footer';
 import AddCourseModal from './components/Modals/AddCourseModal';
 import CourseDetailModal from './components/Modals/CourseDetailModal';
+import AdjustCreditsModal from './components/Modals/AdjustCreditsModal';
+import SeeDetailsPanel from './components/SeeDetailsPanel';
 import { getSemesterStatus } from './components/Planner/PlannedCourseCard';
 
 const BASE = '/api';
@@ -24,9 +26,11 @@ export default function App() {
   const [validation, setValidation] = useState(null);
   const [validating, setValidating] = useState(false);
 
-  // Modal state
+  // Modal / panel state
   const [addCourseModal, setAddCourseModal] = useState(null); // { course, mode, planCourseId? }
   const [detailModal, setDetailModal] = useState(null);       // { planCourse, status }
+  const [adjustModal, setAdjustModal] = useState(null);       // { planCourse }
+  const [showDetails, setShowDetails] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -158,6 +162,16 @@ export default function App() {
     setAddCourseModal({ course: planCourse.course, mode: 'move', planCourseId: planCourse.plan_course_id });
   };
 
+  const handleAdjustCredits = async (planCourseId, newCredits) => {
+    await fetch(`${BASE}/plans/${planId}/courses/${planCourseId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ planned_credits: newCredits }),
+    });
+    loadPlanCourses();
+    setAdjustModal(null);
+  };
+
   const handleViewDetails = (planCourse, status) => {
     setDetailModal({ planCourse, status });
   };
@@ -193,9 +207,17 @@ export default function App() {
 
   // ── Derived state ──────────────────────────────────────────────────────────
   const plannedCourseIds = new Set(planCourses.map((pc) => pc.course.id));
-  const earnedCredits = planCourses.reduce((sum, pc) => sum + (pc.planned_credits ?? pc.course.credits), 0);
   const totalCredits = majors.find((m) => m.id === selectedMajorId)?.total_credits ?? 120;
   const majorName = majors.find((m) => m.id === selectedMajorId)?.name ?? 'Computer Science';
+
+  const creditsByStatus = planCourses.reduce(
+    (acc, pc) => {
+      const st = getSemesterStatus(pc.semester_year, pc.semester_term);
+      acc[st] = (acc[st] ?? 0) + (pc.planned_credits ?? pc.course.credits);
+      return acc;
+    },
+    { completed: 0, enrolled: 0, planned: 0 }
+  );
 
   const getDragOverlayCourse = () => {
     if (!activeItem) return null;
@@ -220,7 +242,25 @@ export default function App() {
         <Navbar studentName="Student" />
 
         {/* White sub-header with credit stats */}
-        <SubHeader planned={earnedCredits} total={totalCredits} />
+        <SubHeader
+          completed={creditsByStatus.completed}
+          inProgress={creditsByStatus.enrolled}
+          planned={creditsByStatus.planned}
+          total={totalCredits}
+          showDetails={showDetails}
+          onSeeDetails={() => setShowDetails((v) => !v)}
+        />
+
+        {/* SEE DETAILS breakdown panel */}
+        {showDetails && (
+          <SeeDetailsPanel
+            planCourses={planCourses}
+            requirements={requirements}
+            transferCredits={transferCredits}
+            total={totalCredits}
+            onClose={() => setShowDetails(false)}
+          />
+        )}
 
         {/* Main content area */}
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden', backgroundColor: '#f4f4f4' }}>
@@ -231,6 +271,7 @@ export default function App() {
             onRemoveCourse={removeCourseFromPlan}
             onViewDetails={handleViewDetails}
             onMoveCourse={handleMoveCourse}
+            onAdjustCredits={(planCourse) => setAdjustModal({ planCourse })}
             onValidate={validatePlan}
             validating={validating}
             validation={validation}
@@ -275,6 +316,15 @@ export default function App() {
           onClose={() => setDetailModal(null)}
           onRemove={detailModal.status === 'planned' ? removeCourseFromPlan : null}
           onMove={detailModal.status === 'planned' ? () => handleMoveCourse(detailModal.planCourse) : null}
+        />
+      )}
+
+      {/* Adjust Credits modal */}
+      {adjustModal && (
+        <AdjustCreditsModal
+          planCourse={adjustModal.planCourse}
+          onSave={handleAdjustCredits}
+          onClose={() => setAdjustModal(null)}
         />
       )}
     </DndContext>
