@@ -11,8 +11,7 @@ import CourseDetailModal from './components/Modals/CourseDetailModal';
 import AdjustCreditsModal from './components/Modals/AdjustCreditsModal';
 import SeeDetailsPanel from './components/SeeDetailsPanel';
 import { getSemesterStatus } from './components/Planner/PlannedCourseCard';
-
-const BASE = '/api';
+import * as api from './api';
 
 export default function App() {
   const [majors, setMajors] = useState([]);
@@ -35,42 +34,38 @@ export default function App() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
-    fetch(`${BASE}/majors`).then((r) => r.json()).then((data) => {
+    api.getMajors().then((data) => {
       setMajors(data);
       if (data.length) setSelectedMajorId(data[0].id);
     });
-    fetch(`${BASE}/courses`).then((r) => r.json()).then(setAllCourses);
+    api.getCourses().then(setAllCourses);
   }, []);
 
   useEffect(() => {
     if (!selectedMajorId) return;
-    fetch(`${BASE}/majors/${selectedMajorId}/requirements`).then((r) => r.json()).then(setRequirements);
+    api.getRequirements(selectedMajorId).then(setRequirements);
   }, [selectedMajorId]);
 
   useEffect(() => {
     if (!selectedMajorId) return;
-    fetch(`${BASE}/plans`).then((r) => r.json()).then((plans) => {
+    api.getPlans().then((plans) => {
       const match = plans.find((p) => p.major_id === selectedMajorId);
       if (match) {
         setPlanId(match.id);
       } else {
-        fetch(`${BASE}/plans`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: 'My Graduation Plan', major_id: selectedMajorId }),
-        }).then((r) => r.json()).then((p) => setPlanId(p.id));
+        api.createPlan('My Graduation Plan', selectedMajorId).then((p) => setPlanId(p.id));
       }
     });
   }, [selectedMajorId]);
 
   const loadPlanCourses = useCallback(() => {
     if (!planId) return;
-    fetch(`${BASE}/plans/${planId}/courses`).then((r) => r.json()).then(setPlanCourses);
+    api.getPlanCourses(planId).then(setPlanCourses);
   }, [planId]);
 
   const loadTransferCredits = useCallback(() => {
     if (!planId) return;
-    fetch(`${BASE}/plans/${planId}/transfer-credits`).then((r) => r.json()).then(setTransferCredits);
+    api.getTransferCredits(planId).then(setTransferCredits);
   }, [planId]);
 
   useEffect(() => { loadPlanCourses(); }, [loadPlanCourses]);
@@ -97,58 +92,25 @@ export default function App() {
 
     if (activeId.startsWith('catalog-')) {
       const courseId = parseInt(activeId.replace('catalog-', ''));
-      await fetch(`${BASE}/plans/${planId}/courses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ course_id: courseId, semester_year: semYear, semester_term: semTerm }),
-      });
+      await api.addCourseToPlan(planId, courseId, semYear, semTerm);
       loadPlanCourses();
     } else if (activeId.startsWith('planned-')) {
       const planCourseId = parseInt(activeId.replace('planned-', ''));
-      await fetch(`${BASE}/plans/${planId}/courses/${planCourseId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ semester_year: semYear, semester_term: semTerm }),
-      });
+      await api.moveCourse(planId, planCourseId, semYear, semTerm);
       loadPlanCourses();
     }
   };
 
   // ── Plan actions ──────────────────────────────────────────────────────────
   const removeCourseFromPlan = async (planCourseId) => {
-    await fetch(`${BASE}/plans/${planId}/courses/${planCourseId}`, { method: 'DELETE' });
+    await api.removeCourse(planId, planCourseId);
     loadPlanCourses();
     setValidation(null);
   };
 
-  const addCourseToPlan = async (courseId, year, term) => {
-    const res = await fetch(`${BASE}/plans/${planId}/courses`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ course_id: courseId, semester_year: year, semester_term: term }),
-    });
-    if (res.ok) {
-      loadPlanCourses();
-      setAddCourseModal(null);
-    } else {
-      const err = await res.json();
-      alert(err.error || 'Failed to add course');
-    }
-  };
-
-  const moveCourse = async (planCourseId, year, term) => {
-    await fetch(`${BASE}/plans/${planId}/courses/${planCourseId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ semester_year: year, semester_term: term }),
-    });
-    loadPlanCourses();
-    setAddCourseModal(null);
-  };
-
   const validatePlan = async () => {
     setValidating(true);
-    const result = await fetch(`${BASE}/plans/${planId}/validate`).then((r) => r.json());
+    const result = await api.validatePlan(planId);
     setValidation(result);
     setValidating(false);
   };
@@ -163,11 +125,7 @@ export default function App() {
   };
 
   const handleAdjustCredits = async (planCourseId, newCredits) => {
-    await fetch(`${BASE}/plans/${planId}/courses/${planCourseId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ planned_credits: newCredits }),
-    });
+    await api.adjustCredits(planId, planCourseId, newCredits);
     loadPlanCourses();
     setAdjustModal(null);
   };
@@ -196,13 +154,15 @@ export default function App() {
     }
   };
 
-  const handleModalAdd = (year, term) => {
+  const handleModalAdd = async (year, term) => {
     if (!addCourseModal) return;
     if (addCourseModal.mode === 'move' && addCourseModal.planCourseId) {
-      moveCourse(addCourseModal.planCourseId, year, term);
+      await api.moveCourse(planId, addCourseModal.planCourseId, year, term);
     } else {
-      addCourseToPlan(addCourseModal.course.id, year, term);
+      await api.addCourseToPlan(planId, addCourseModal.course.id, year, term);
     }
+    loadPlanCourses();
+    setAddCourseModal(null);
   };
 
   // ── Derived state ──────────────────────────────────────────────────────────
